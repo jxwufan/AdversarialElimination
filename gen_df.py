@@ -18,6 +18,7 @@ import tensorflow as tf
 from tensorflow import keras
 import numpy as np
 import pickle
+from tqdm import tqdm
 
 from cleverhans.attacks import DeepFool
 from cleverhans.compat import flags
@@ -143,8 +144,24 @@ def mnist_tutorial(train_start=0, train_end=60000, test_start=0,
   df = DeepFool(wrap, sess=sess)
   adv_x = df.generate(x)
 
-  x_adv_test = sess.run(adv_x, feed_dict={x: x_test})
-  x_adv_train = sess.run(adv_x, feed_dict={x: x_train})
+  batch = 1000
+  x_adv_test = None
+  x_adv_train = None
+
+  for i in tqdm(range(int(len(x_test) / batch))):
+    tmp = sess.run(adv_x, feed_dict={x: x_test[i*batch:(i+1)*batch]})
+    if x_adv_test is None:
+      x_adv_test = tmp
+    else:
+      x_adv_test = np.concatenate((x_adv_test, tmp))
+
+  for i in tqdm(range(int(len(x_train) / batch))):
+    tmp = sess.run(adv_x, feed_dict={x: x_train[i*batch:(i+1)*batch]})
+    if x_adv_train is None:
+      x_adv_train = tmp
+    else:
+      x_adv_train = np.concatenate((x_adv_train, tmp))
+
   def evaluate_adv():
     # Evaluate the accuracy of the MNIST model on legitimate test examples
     eval_params = {'batch_size': batch_size}

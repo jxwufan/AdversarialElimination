@@ -18,6 +18,7 @@ import tensorflow as tf
 from tensorflow import keras
 import numpy as np
 import pickle
+from tqdm import tqdm
 
 from cleverhans.attacks import FastGradientMethod
 from cleverhans.compat import flags
@@ -147,8 +148,24 @@ def mnist_tutorial(train_start=0, train_end=60000, test_start=0,
                  'clip_max': 1.}
   adv_x = fgsm.generate(x, **fgsm_params)
 
-  x_adv_test = sess.run(adv_x, feed_dict={x: x_test})
-  x_adv_train = sess.run(adv_x, feed_dict={x: x_train})
+  batch = 1000
+  x_adv_test = None
+  x_adv_train = None
+
+  for i in tqdm(range(int(len(x_test) / batch))):
+    tmp = sess.run(adv_x, feed_dict={x: x_test[i*batch:(i+1)*batch]})
+    if x_adv_test is None:
+      x_adv_test = tmp
+    else:
+      x_adv_test = np.concatenate((x_adv_test, tmp))
+
+  for i in tqdm(range(int(len(x_train) / batch))):
+    tmp = sess.run(adv_x, feed_dict={x: x_train[i*batch:(i+1)*batch]})
+    if x_adv_train is None:
+      x_adv_train = tmp
+    else:
+      x_adv_train = np.concatenate((x_adv_train, tmp))
+
   def evaluate_adv():
     # Evaluate the accuracy of the MNIST model on legitimate test examples
     eval_params = {'batch_size': batch_size}
@@ -162,6 +179,7 @@ def mnist_tutorial(train_start=0, train_end=60000, test_start=0,
   print(x_adv_train.shape)
   print(x_adv_test.shape)
   pickle.dump(save_list, open("./fg.pkl", 'wb'))
+  pickle.dump(x_adv_test, open("./x_adv_test.pk", 'wb'))
 
 
 def main(argv=None):
