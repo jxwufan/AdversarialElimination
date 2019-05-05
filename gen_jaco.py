@@ -17,8 +17,10 @@ import os
 import tensorflow as tf
 from tensorflow import keras
 import numpy as np
+import pickle
 
-from cleverhans.attacks import FastGradientMethod
+from tqdm import tqdm
+from cleverhans.attacks import SaliencyMapMethod
 from cleverhans.compat import flags
 from cleverhans.dataset import MNIST
 from cleverhans.loss import CrossEntropy
@@ -101,7 +103,6 @@ def mnist_tutorial(train_start=0, train_end=60000, test_start=0,
     eval_params = {'batch_size': batch_size}
     acc = model_eval(sess, x, y, preds, x_test, y_test, args=eval_params)
     report.clean_train_clean_eval = acc
-#        assert X_test.shape[0] == test_end - test_start, X_test.shape
     print('Test accuracy on legitimate examples: %0.4f' % acc)
 
   # Train an MNIST model
@@ -140,28 +141,38 @@ def mnist_tutorial(train_start=0, train_end=60000, test_start=0,
     acc = model_eval(sess, x, y, preds, x_train, y_train, args=eval_params)
     report.train_clean_train_clean_eval = acc
 
-  # Initialize the Fast Gradient Sign Method (FGSM) attack object and graph
-  fgsm = FastGradientMethod(wrap, sess=sess)
-  fgsm_params = {'eps': 0.3,
-                 'clip_min': 0.,
-                 'clip_max': 1.}
-  adv_x = fgsm.generate(x, **fgsm_params)
-  # Consider the attack to be constant
-  adv_x = tf.stop_gradient(adv_x)
-  preds_adv = model(adv_x)
+  sal = SaliencyMapMethod(wrap, sess=sess)
+  adv_x = sal.generate(x)
 
-  # Evaluate the accuracy of the MNIST model on adversarial examples
-  eval_par = {'batch_size': batch_size}
-  acc = model_eval(sess, x, y, preds_adv, x_test, y_test, args=eval_par)
-  print('Test accuracy on adversarial examples: %0.4f\n' % acc)
-  report.clean_train_adv_eval = acc
+  batch = 1000
+  x_adv_test = None
+  for i in tqdm(range(int(len(x_test) / batch))):
+    tmp = sess.run(adv_x, feed_dict={x: x_test[i*batch:(i+1)*batch]})
+    if x_adv_test is None:
+      x_adv_test = tmp
+    else:
+      x_adv_test = np.concatenate((x_adv_test, tmp))
 
-  # Calculating train error
-  if testing:
-    eval_par = {'batch_size': batch_size}
-    acc = model_eval(sess, x, y, preds_adv, x_train,
-                     y_train, args=eval_par)
-    report.train_clean_train_adv_eval = acc
+  x_adv_train = None
+  for i in tqdm(range(int(len(x_train) / batch))):
+    tmp = sess.run(adv_x, feed_dict={x: x_train[i*batch:(i+1)*batch]})
+    if x_adv_train is None:
+      x_adv_train = tmp
+    else:
+      x_adv_train = np.concatenate((x_adv_train, tmp))
+  def evaluate_adv():
+    # Evaluate the accuracy of the MNIST model on legitimate test examples
+    eval_params = {'batch_size': batch_size}
+    acc = model_eval(sess, x, y, preds, x_adv_test, y_test, args=eval_params)
+    report.clean_train_clean_eval = acc
+    print('Test accuracy on legitimate examples: %0.4f' % acc)
+
+  evaluate_adv()
+
+  save_list = [x_adv_train, x_adv_test]
+  print(x_adv_train.shape)
+  print(x_adv_test.shape)
+  pickle.dump(save_list, open("./sal.pkl", 'wb'))
 
 
 def main(argv=None):
