@@ -179,7 +179,10 @@ def mnist_tutorial(train_start=0, train_end=60000, test_start=0,
   print(x_adv_train.shape)
   print(x_adv_test.shape)
   pickle.dump(save_list, open("./fg.pkl", 'wb'))
-  pickle.dump(x_adv_test, open("./x_adv_test.pk", 'wb'))
+  #pickle.dump(x_adv_test, open("./x_adv_test.pk", 'wb'))
+
+  save_list = [x_train, x_test, y_train, y_test]
+  pickle.dump(save_list, open("./mnist.pkl", 'wb'))
 
 
 def main(argv=None):
