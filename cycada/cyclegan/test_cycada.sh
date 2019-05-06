@@ -4,14 +4,14 @@ else
     how_many=50
 fi
 
-model=cycada_svhn2mnist_noIdentity
-epoch=75
+model=cycada_mnistfg2mnist_noIdentity
+epoch=30
 CUDA_VISIBLE_DEVICES=0 python test.py --name ${model} \
     --resize_or_crop=None \
     --loadSize=32 --fineSize=32 --which_model_netD n_layers --n_layers_D 3 \
     --model cycle_gan_semantic \
     --no_flip --batchSize 100 \
-    --dataset_mode mnist_svhn --dataroot /x/jhoffman/ \
+    --dataset_mode mnist_mnistfg --dataroot /home/fan/data/ \
     --which_direction BtoA \
     --phase train \
     --how_many ${how_many} \
