@@ -46,6 +46,31 @@ def binary_filter(x):
   return x_bin
 
 
+def gaussian_kernel(size: int,
+                    mean: float,
+                    std: float,
+                    ):
+  d = tf.distributions.Normal(mean, std)
+
+  vals = d.prob(tf.range(start=-size, limit=size + 1, dtype=tf.float32))
+
+  gauss_kernel = tf.einsum('i,j->ij',
+                           vals,
+                           vals)
+
+  return gauss_kernel / tf.reduce_sum(gauss_kernel)
+
+
+def gaussian_filter(x):
+  gauss_kernel = gaussian_kernel(3, 0., 1.)
+
+  # Expand dimensions of `gauss_kernel` for `tf.nn.conv2d` signature.
+  gauss_kernel = gauss_kernel[:, :, tf.newaxis, tf.newaxis]
+
+  # Convolve.
+  return tf.nn.conv2d(x, gauss_kernel, strides=[1, 1, 1, 1], padding="SAME")
+
+
 def mnist_tutorial(train_start=0, train_end=60000, test_start=0,
                    test_end=10000, nb_epochs=NB_EPOCHS, batch_size=BATCH_SIZE,
                    learning_rate=LEARNING_RATE, train_dir=TRAIN_DIR,
@@ -177,6 +202,19 @@ def mnist_tutorial(train_start=0, train_end=60000, test_start=0,
     print('Test accuracy on filtered examples: %0.4f' % acc)
 
   evaluate_adv()
+<<<<<<< HEAD
+=======
+  print(x_filter_train.shape)
+  print(x_filter_test.shape)
+
+  filter_x = gaussian_filter(x)
+  x_filter_test = convert(x_test)
+  x_filter_train = convert(x_train)
+  evaluate_adv()
+  print(x_filter_train.shape)
+  print(x_filter_test.shape)
+
+>>>>>>> cb1a233f589d25de22793bbd9d796a03d916d63b
 
 
 def main(argv=None):
