@@ -26,6 +26,9 @@ def CreateDataset(opt):
     elif opt.dataset_mode == 'mnist_svhn':
         from data.mnist_svhn_dataset import MnistSvhnDataset
         dataset = MnistSvhnDataset()
+    elif opt.dataset_mode == 'mnist_mnistfg':
+        from data.mnist_mnistfg_dataset import MnistMnistfgDataset
+        dataset = MnistMnistfgDataset()
     elif opt.dataset_mode == 'svhn_mnist':
         from data.svhn_mnist_dataset import SvhnMnistDataset
         dataset = SvhnMnistDataset()
