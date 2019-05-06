@@ -17,9 +17,9 @@ def resize(images):
     output = np.array(output)
     return output
 
-class MnistMnistfgDataset(BaseDataset):
+class MnistfgTestDataset(BaseDataset):
     def name(self):
-        return 'MnistMnistfgDataset'
+        return 'MnistfgTestDataset'
 
     def initialize(self, opt):
         self.opt = opt
@@ -28,13 +28,13 @@ class MnistMnistfgDataset(BaseDataset):
 	x_adv_train, x_adv_test = pickle.load(open(os.path.join(opt.dataroot, "fg/fg.pkl")))
 	x_train, x_test, y_train, y_test = pickle.load(open(os.path.join(opt.dataroot, "mnist/mnist.pkl")))
 
-        self.mnist = x_train
+        self.mnist = x_test
 	self.mnist = resize(self.mnist);
-        self.mnist_label = y_train
+        self.mnist_label = y_test
 
-        self.mnistfg = np.concatenate((x_adv_train, x_train))
+        self.mnistfg = np.concatenate((x_adv_test, x_test))
 	self.mnistfg = resize(self.mnistfg)
-        self.mnistfg_label = np.concatenate((y_train, y_train))
+        self.mnistfg_label = np.concatenate((y_test, y_test))
         
         self.transform = transforms.Compose([
             transforms.ToTensor(),
