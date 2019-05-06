@@ -17,25 +17,25 @@ def dump(lst, fName):
 fg_train, fg_test = pkload('fg')
 fg_train_decoded = pred(fg_train)
 fg_test_decoded = pred(fg_test)
-dump([fg_train_decoded, fg_test_decoded],'fg')	
+dump([fg_train, fg_test, fg_train_decoded, fg_test_decoded],'fg')	
 
 
-x_train, x_test, _, _ = pkload('mnist')
+x_train, x_test, y_train, y_test = pkload('mnist')
 mnist_train_decoded = pred(x_train)
 mnist_test_decoded = pred(x_test)
-dump([mnist_train_decoded, mnist_test_decoded], 'mnist')
+dump([x_train, x_test, mnist_train_decoded, mnist_test_decoded, y_train, y_test], 'mnist')
 
 bim_train, bim_test = pkload('bim')
 bim_train_decoded = pred(bim_train)
 bim_test_decoded = pred(bim_test)
-dump([bim_train_decoded, bim_test_decoded], 'bim')
+dump([bim_train, bim_test, bim_train_decoded, bim_test_decoded], 'bim')
 
 
 
 df_train, df_test = pkload('df')
 df_train_decoded = pred(df_train)
 df_test_decoded = pred(df_test)
-dump([df_train_decoded, df_test_decoded], 'df')
+dump([df_train, df_test, df_train_decoded, df_test_decoded], 'df')
 
 
 
