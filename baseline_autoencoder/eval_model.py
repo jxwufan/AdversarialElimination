@@ -29,6 +29,9 @@ from cleverhans.utils_keras import cnn_model
 from cleverhans.utils_keras import KerasModelWrapper
 from cleverhans.utils_tf import model_eval
 
+PKLDATA='fg'
+
+
 FLAGS = flags.FLAGS
 
 NB_EPOCHS = 6
@@ -39,7 +42,7 @@ FILENAME = 'mnist.ckpt'
 LOAD_MODEL = True
 
 
-def mnist_tutorial(train_start=0, train_end=60000, test_start=0,
+def mnist_tutorial(pkldata, train_start=0, train_end=60000, test_start=0,
                    test_end=10000, nb_epochs=NB_EPOCHS, batch_size=BATCH_SIZE,
                    learning_rate=LEARNING_RATE, train_dir=TRAIN_DIR,
                    filename=FILENAME, load_model=LOAD_MODEL,
@@ -79,18 +82,18 @@ def mnist_tutorial(train_start=0, train_end=60000, test_start=0,
   x_train, x_test, x_adv_train, x_adv_test, y_train, y_test = pickle.load(open('mnist_decoded.pkl'))
 
   # Get FG data
-  adv_train, adv_test, adv_train_decoded, adv_test_decoded = pickle.load(open('bim_decoded.pkl'))
+  adv_train, adv_test, adv_train_decoded, adv_test_decoded = pickle.load(open(pkldata+'_decoded.pkl'))
 
   # dictionary of meaning-data
   eval_dic = {
-	'legitimate testing':(x_test, y_test), 
-	'legitimate decoded testing':(x_adv_test, y_test), 
-	'legitimate training':(x_train, y_train), 
-	'legitimate decoded training':(x_adv_train, y_train), 
-	'adversarial testing':(adv_test, y_test), 
-	'adversarial decoded testing':(adv_test_decoded, y_test), 
-	'adversarial training':(adv_train, y_train), 
-	'adversarial decoded training':(adv_train_decoded, y_train)
+	'1.legitimate testing':(x_test, y_test), 
+	'2.legitimate decoded testing':(x_adv_test, y_test), 
+	'3.legitimate training':(x_train, y_train), 
+	'4.legitimate decoded training':(x_adv_train, y_train), 
+	'5.adversarial testing':(adv_test, y_test), 
+	'6.adversarial decoded testing':(adv_test_decoded, y_test), 
+	'7.adversarial training':(adv_train, y_train), 
+	'8.adversarial decoded training':(adv_train_decoded, y_train)
   	}
 
 
@@ -130,7 +133,7 @@ def mnist_tutorial(train_start=0, train_end=60000, test_start=0,
     print("Model loaded from: {}".format(ckpt_path))
     evaluate()
 
-  for key, value in eval_dic.iteritems():
+  for key, value in sorted(eval_dic.iteritems()):
     eval_params = {'batch_size': batch_size}
     acc = model_eval(sess, x, y, preds, value[0], value[1], args=eval_params)
     print('Test accuracy on ' + key + ' examples: %0.4f' % acc)
@@ -142,15 +145,16 @@ def mnist_tutorial(train_start=0, train_end=60000, test_start=0,
 def main(argv=None):
   from cleverhans_tutorials import check_installation
   check_installation(__file__)
-
+  
   mnist_tutorial(nb_epochs=FLAGS.nb_epochs,
                  batch_size=FLAGS.batch_size,
                  learning_rate=FLAGS.learning_rate,
                  train_dir=FLAGS.train_dir,
                  filename=FLAGS.filename,
-                 load_model=FLAGS.load_model)
+                 load_model=FLAGS.load_model,
+                 pkldata=PKLDATA)
 
-
+  
 if __name__ == '__main__':
   flags.DEFINE_integer('nb_epochs', NB_EPOCHS,
                        'Number of epochs to train model')
