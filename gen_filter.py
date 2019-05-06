@@ -18,8 +18,8 @@ import tensorflow as tf
 from tensorflow import keras
 import numpy as np
 import pickle
+from tqdm import tqdm
 
-from cleverhans.attacks import FastGradientMethod
 from cleverhans.compat import flags
 from cleverhans.dataset import MNIST
 from cleverhans.loss import CrossEntropy
@@ -29,8 +29,7 @@ from cleverhans.utils_keras import cnn_model
 from cleverhans.utils_keras import KerasModelWrapper
 from cleverhans.utils_tf import model_eval
 
-PKLDATA='fg'
-
+PKLDATA='bim'
 
 FLAGS = flags.FLAGS
 
@@ -42,7 +41,37 @@ FILENAME = 'mnist.ckpt'
 LOAD_MODEL = True
 
 
-def mnist_tutorial(pkldata, train_start=0, train_end=60000, test_start=0,
+def binary_filter(x):
+  x_bin = tf.nn.relu(tf.sign(x - 0.5))
+  return x_bin
+
+
+def gaussian_kernel(size: int,
+                    mean: float,
+                    std: float,
+                    ):
+  d = tf.distributions.Normal(mean, std)
+
+  vals = d.prob(tf.range(start=-size, limit=size + 1, dtype=tf.float32))
+
+  gauss_kernel = tf.einsum('i,j->ij',
+                           vals,
+                           vals)
+
+  return gauss_kernel / tf.reduce_sum(gauss_kernel)
+
+
+def gaussian_filter(x):
+  gauss_kernel = gaussian_kernel(3, 0., 1.)
+
+  # Expand dimensions of `gauss_kernel` for `tf.nn.conv2d` signature.
+  gauss_kernel = gauss_kernel[:, :, tf.newaxis, tf.newaxis]
+
+  # Convolve.
+  return tf.nn.conv2d(x, gauss_kernel, strides=[1, 1, 1, 1], padding="SAME")
+
+
+def mnist_tutorial(train_start=0, train_end=60000, test_start=0,
                    test_end=10000, nb_epochs=NB_EPOCHS, batch_size=BATCH_SIZE,
                    learning_rate=LEARNING_RATE, train_dir=TRAIN_DIR,
                    filename=FILENAME, load_model=LOAD_MODEL,
@@ -79,23 +108,13 @@ def mnist_tutorial(pkldata, train_start=0, train_end=60000, test_start=0,
   keras.backend.set_session(sess)
 
   # Get MNIST test data
-  x_train, x_test, x_adv_train, x_adv_test, y_train, y_test = pickle.load(open('mnist_decoded.pkl'))
-
-  # Get FG data
-  adv_train, adv_test, adv_train_decoded, adv_test_decoded = pickle.load(open(pkldata+'_decoded.pkl'))
-
-  # dictionary of meaning-data
-  eval_dic = {
-	'1.legitimate testing':(x_test, y_test),
-	'2.legitimate decoded testing':(x_adv_test, y_test),
-	'3.legitimate training':(x_train, y_train),
-	'4.legitimate decoded training':(x_adv_train, y_train),
-	'5.adversarial testing':(adv_test, y_test),
-	'6.adversarial decoded testing':(adv_test_decoded, y_test),
-	'7.adversarial training':(adv_train, y_train),
-	'8.adversarial decoded training':(adv_train_decoded, y_train)
-    }
-
+  mnist = MNIST(train_start=train_start, train_end=train_end,
+                test_start=test_start, test_end=test_end)
+  [x_adv_train, x_adv_test] = pickle.load(open(PKLDATA+'.pkl'))
+  x_train, y_train = mnist.get_set('train')
+  x_train = x_adv_train
+  x_test, y_test = mnist.get_set('test')
+  x_test = x_adv_test
 
   # Obtain Image Parameters
   img_rows, img_cols, nchannels = x_train.shape[1:4]
@@ -118,8 +137,20 @@ def mnist_tutorial(pkldata, train_start=0, train_end=60000, test_start=0,
     eval_params = {'batch_size': batch_size}
     acc = model_eval(sess, x, y, preds, x_test, y_test, args=eval_params)
     report.clean_train_clean_eval = acc
-#        assert X_test.shape[0] == test_end - test_start, X_test.shape
-    print('Test accuracy on legitimate test examples: %0.4f' % acc)
+    print('Test accuracy on adversarial examples: %0.4f' % acc)
+
+  # Train an MNIST model
+  train_params = {
+      'nb_epochs': nb_epochs,
+      'batch_size': batch_size,
+      'learning_rate': learning_rate,
+      'train_dir': train_dir,
+      'filename': filename
+  }
+
+  rng = np.random.RandomState([2017, 8, 30])
+  if not os.path.exists(train_dir):
+    os.mkdir(train_dir)
 
   ckpt = tf.train.get_checkpoint_state(train_dir)
   print(train_dir, ckpt)
@@ -132,15 +163,59 @@ def mnist_tutorial(pkldata, train_start=0, train_end=60000, test_start=0,
     saver.restore(sess, ckpt_path)
     print("Model loaded from: {}".format(ckpt_path))
     evaluate()
+  else:
+    print("Model was not loaded, training from scratch.")
+    loss = CrossEntropy(wrap, smoothing=label_smoothing)
+    train(sess, loss, x_train, y_train, evaluate=evaluate,
+          args=train_params, rng=rng)
 
-  for key, value in sorted(eval_dic.iteritems()):
+  # Calculate training error
+  if testing:
     eval_params = {'batch_size': batch_size}
-    acc = model_eval(sess, x, y, preds, value[0], value[1], args=eval_params)
-    print('Test accuracy on ' + key + ' examples: %0.4f' % acc)
+    acc = model_eval(sess, x, y, preds, x_train, y_train, args=eval_params)
+    report.train_clean_train_clean_eval = acc
 
-  eval_params = {'batch_size': batch_size}
-  acc = model_eval(sess, x, y, preds, x_adv_train, y_train, args=eval_params)
-  print('Test accuracy on legitimate decoded examples: %0.4f' % acc)
+  # Initialize the Fast Gradient Sign Method (FGSM) attack object and graph
+  filter_x = binary_filter(x)
+
+  batch = 1000
+
+  def convert(x_input):
+    x_output = None
+    for i in tqdm(range(int(len(x_input) / batch))):
+      tmp = sess.run(filter_x, feed_dict={x: x_input[i * batch:(i + 1) * batch]})
+      if x_output is None:
+        x_output = tmp
+      else:
+        x_output = np.concatenate((x_output, tmp))
+    return x_output
+
+  x_filter_test = convert(x_test)
+  x_filter_train = convert(x_train)
+
+
+  def evaluate_adv():
+    # Evaluate the accuracy of the MNIST model on legitimate test examples
+    eval_params = {'batch_size': batch_size}
+    acc = model_eval(sess, x, y, preds, x_filter_test, y_test, args=eval_params)
+    report.clean_train_clean_eval = acc
+    print('Test accuracy on filtered examples: %0.4f' % acc)
+
+  evaluate_adv()
+<<<<<<< HEAD
+=======
+  print(x_filter_train.shape)
+  print(x_filter_test.shape)
+
+  filter_x = gaussian_filter(x)
+  x_filter_test = convert(x_test)
+  x_filter_train = convert(x_train)
+  evaluate_adv()
+  print(x_filter_train.shape)
+  print(x_filter_test.shape)
+
+>>>>>>> cb1a233f589d25de22793bbd9d796a03d916d63b
+
 
 def main(argv=None):
   from cleverhans_tutorials import check_installation
@@ -151,8 +226,7 @@ def main(argv=None):
                  learning_rate=FLAGS.learning_rate,
                  train_dir=FLAGS.train_dir,
                  filename=FLAGS.filename,
-                 load_model=FLAGS.load_model,
-                 pkldata=PKLDATA)
+                 load_model=FLAGS.load_model)
 
 
 if __name__ == '__main__':
