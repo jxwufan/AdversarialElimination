@@ -29,6 +29,8 @@ from cleverhans.utils_keras import cnn_model
 from cleverhans.utils_keras import KerasModelWrapper
 from cleverhans.utils_tf import model_eval
 
+PKLDATA='bim'
+
 FLAGS = flags.FLAGS
 
 NB_EPOCHS = 6
@@ -83,7 +85,7 @@ def mnist_tutorial(train_start=0, train_end=60000, test_start=0,
   # Get MNIST test data
   mnist = MNIST(train_start=train_start, train_end=train_end,
                 test_start=test_start, test_end=test_end)
-  [x_adv_train, x_adv_test] = pickle.load(open("./fg.pkl", 'rb'))
+  [x_adv_train, x_adv_test] = pickle.load(open(PKLDATA+'.pkl'))
   x_train, y_train = mnist.get_set('train')
   x_train = x_adv_train
   x_test, y_test = mnist.get_set('test')
@@ -175,9 +177,6 @@ def mnist_tutorial(train_start=0, train_end=60000, test_start=0,
     print('Test accuracy on filtered examples: %0.4f' % acc)
 
   evaluate_adv()
-  print(x_filter_train.shape)
-  print(x_filter_test.shape)
-
 
 
 def main(argv=None):
