@@ -38,6 +38,12 @@ def CreateDataset(opt):
     elif opt.dataset_mode == 'mnistdf_test':
         from data.mnistdf_test_dataset import MnistdfTestDataset
         dataset = MnistdfTestDataset()
+    elif opt.dataset_mode == 'mnist_mnistbim':
+        from data.mnist_mnistbim_dataset import MnistMnistbimDataset
+        dataset = MnistMnistbimDataset()
+    elif opt.dataset_mode == 'mnistbim_test':
+        from data.mnistbim_test_dataset import MnistbimTestDataset
+        dataset = MnistbimTestDataset()
     elif opt.dataset_mode == 'svhn_mnist':
         from data.svhn_mnist_dataset import SvhnMnistDataset
         dataset = SvhnMnistDataset()
