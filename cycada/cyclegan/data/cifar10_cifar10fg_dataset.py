@@ -10,10 +10,9 @@ import cv2
 from PIL import Image
 from PIL.ImageOps import invert
 
-
-class Cifar10fgTestDataset(BaseDataset):
+class Cifar10Cifar10fgDataset(BaseDataset):
     def name(self):
-        return 'Cifar10fgTestDataset'
+        return 'Cifar10Cifar10fgDataset'
 
     def initialize(self, opt):
         self.opt = opt
@@ -21,7 +20,6 @@ class Cifar10fgTestDataset(BaseDataset):
         print(opt)
 	x_adv_train, x_adv_test = pickle.load(open(os.path.join(opt.dataroot, "fg/cifar_fg.pkl")))
 	x_train, x_test, y_train, y_test = pickle.load(open(os.path.join(opt.dataroot, "cifar10/cifar10.pkl")))
-
 	y_train = y_train.reshape([-1]).astype('int64')
 	y_test = y_test.reshape([-1]).astype('int64')
 
@@ -30,12 +28,11 @@ class Cifar10fgTestDataset(BaseDataset):
 	x_train = ((x_train) * 255)
 	x_test = ((x_test) * 255)
 
-        self.cifar10 = x_test
-        self.cifar10_label = y_test
+        self.cifar10 = x_train
+        self.cifar10_label = y_train
 
-        self.cifar10fg = np.concatenate((x_adv_test, x_test))
-	self.cifar10fg = resize(self.cifar10fg)
-        self.cifar10fg_label = np.concatenate((y_test, y_test))
+        self.cifar10fg = np.concatenate((x_adv_train, x_train))
+        self.cifar10fg_label = np.concatenate((y_train, y_train))
         
         self.transform = transforms.Compose([
             transforms.ToTensor(),

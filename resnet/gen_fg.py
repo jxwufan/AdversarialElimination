@@ -49,7 +49,7 @@ x_adv_train = []
 for i in tqdm(range(len(x_train))):
     image = x_train[i]
     label = int(y_train_label[i])
-    x_adv = attack(image, label, epsilons=1,  max_epsilon=0.3)
+    x_adv = attack(image, label, epsilons=1,  max_epsilon=0.03)
     if x_adv is None:
         x_adv = image
     x_adv_train.append(x_adv)
@@ -59,7 +59,7 @@ x_adv_test = []
 for i in tqdm(range(len(x_test))):
     image = x_test[i]
     label = int(y_test_label[i])
-    x_adv = attack(image, label, epsilons=1,  max_epsilon=0.3)
+    x_adv = attack(image, label, max_epsilon=0.03)
     if x_adv is None:
         x_adv = image
     x_adv_test.append(x_adv)
