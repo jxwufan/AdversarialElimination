@@ -32,6 +32,12 @@ def CreateDataset(opt):
     elif opt.dataset_mode == 'mnistfg_test':
         from data.mnistfg_test_dataset import MnistfgTestDataset
         dataset = MnistfgTestDataset()
+    elif opt.dataset_mode == 'cifar10_cifar10fg':
+        from data.cifar10_cifar10fg_dataset import Cifar10Cifar10fgDataset
+        dataset = Cifar10Cifar10fgDataset()
+    elif opt.dataset_mode == 'cifar10fg_test':
+        from data.cifar10fg_test_dataset import Cifar10fgTestDataset
+        dataset = Cifar10fgTestDataset()
     elif opt.dataset_mode == 'mnist_mnistdf':
         from data.mnist_mnistdf_dataset import MnistMnistdfDataset
         dataset = MnistMnistdfDataset()
