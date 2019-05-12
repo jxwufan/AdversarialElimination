@@ -38,6 +38,18 @@ def CreateDataset(opt):
     elif opt.dataset_mode == 'cifar10fg_test':
         from data.cifar10fg_test_dataset import Cifar10fgTestDataset
         dataset = Cifar10fgTestDataset()
+    elif opt.dataset_mode == 'cifar10_cifar10bim':
+        from data.cifar10_cifar10bim_dataset import Cifar10Cifar10bimDataset
+        dataset = Cifar10Cifar10bimDataset()
+    elif opt.dataset_mode == 'cifar10bim_test':
+        from data.cifar10bim_test_dataset import Cifar10bimTestDataset
+        dataset = Cifar10bimTestDataset()
+    elif opt.dataset_mode == 'cifar10_cifar10df':
+        from data.cifar10_cifar10df_dataset import Cifar10Cifar10dfDataset
+        dataset = Cifar10Cifar10dfDataset()
+    elif opt.dataset_mode == 'cifar10df_test':
+        from data.cifar10df_test_dataset import Cifar10dfTestDataset
+        dataset = Cifar10dfTestDataset()
     elif opt.dataset_mode == 'mnist_mnistdf':
         from data.mnist_mnistdf_dataset import MnistMnistdfDataset
         dataset = MnistMnistdfDataset()
