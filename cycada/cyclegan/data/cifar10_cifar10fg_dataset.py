@@ -23,11 +23,6 @@ class Cifar10Cifar10fgDataset(BaseDataset):
 	y_train = y_train.reshape([-1]).astype('int64')
 	y_test = y_test.reshape([-1]).astype('int64')
 
-	x_adv_train = ((x_adv_train) * 255)
-	x_adv_test = ((x_adv_test) * 255)
-	x_train = ((x_train) * 255)
-	x_test = ((x_test) * 255)
-
         self.cifar10 = x_train
         self.cifar10_label = y_train
 
