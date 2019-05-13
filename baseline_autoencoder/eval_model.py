@@ -83,6 +83,9 @@ def mnist_tutorial(pkldata, train_start=0, train_end=60000, test_start=0,
 
   # Get FG data
   adv_train, adv_test, adv_train_decoded, adv_test_decoded = pickle.load(open(pkldata+'_decoded.pkl'))
+  
+  # Get GAN
+  test_adv_gan_decode, test_gan_decode = pickle.load(open('./gan_df_decode.pkl'))
 
   # dictionary of meaning-data
   eval_dic = {
@@ -93,8 +96,12 @@ def mnist_tutorial(pkldata, train_start=0, train_end=60000, test_start=0,
 	'5.adversarial testing':(adv_test, y_test),
 	'6.adversarial decoded testing':(adv_test_decoded, y_test),
 	'7.adversarial training':(adv_train, y_train),
-	'8.adversarial decoded training':(adv_train_decoded, y_train)
+	'8.adversarial decoded training':(adv_train_decoded, y_train),
+        '9.GAN decode testing':(test_adv_gan_decode, y_test),
+        '0.GAN decode original testing':(test_gan_decode, y_test),
+
     }
+
 
 
   # Obtain Image Parameters
