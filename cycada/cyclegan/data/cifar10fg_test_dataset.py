@@ -25,16 +25,10 @@ class Cifar10fgTestDataset(BaseDataset):
 	y_train = y_train.reshape([-1]).astype('int64')
 	y_test = y_test.reshape([-1]).astype('int64')
 
-	x_adv_train = ((x_adv_train) * 255)
-	x_adv_test = ((x_adv_test) * 255)
-	x_train = ((x_train) * 255)
-	x_test = ((x_test) * 255)
-
         self.cifar10 = x_test
         self.cifar10_label = y_test
 
         self.cifar10fg = np.concatenate((x_adv_test, x_test))
-	self.cifar10fg = resize(self.cifar10fg)
         self.cifar10fg_label = np.concatenate((y_test, y_test))
         
         self.transform = transforms.Compose([
