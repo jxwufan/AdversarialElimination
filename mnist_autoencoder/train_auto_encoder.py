@@ -102,11 +102,28 @@ autoencoder.summary()
 
 autoencoder.compile(loss='mse', optimizer='adam')
 
+df_train, df_test = pickle.load(open("/data/mnist/df.pkl"))
+df_train = df_train.astype('float32') / 255.
+df_train = np.mean(df_train, axis=3)
+df_train = np.expand_dims(df_train, axis=3)
+df_test = df_test.astype('float32') / 255.
+df_test = np.mean(df_test, axis=3)
+df_test = np.expand_dims(df_test, axis=3)
+
+print(df_train.shape)
+print(x_train.shape)
+
+input_data = np.concatenate([df_train, x_train], axis=0)
+output_data = np.concatenate([x_train, x_train], axis=0)
+
+validation_input_data = np.concatenate([df_test, x_test], axis=0)
+validation_output_data = np.concatenate([x_test, x_test], axis=0)
+
 # Train the autoencoder
-autoencoder.fit(x_train,
-                x_train,
-                validation_data=(x_test, x_test),
+autoencoder.fit(input_data,
+                output_data,
+                validation_data=(validation_input_data, validation_output_data),
                 epochs=200,
                 batch_size=batch_size)
 
-autoencoder.save("autoencoder.h5")
+autoencoder.save("autoencoder_df.h5")

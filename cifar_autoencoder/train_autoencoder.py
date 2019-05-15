@@ -98,11 +98,19 @@ autoencoder.summary()
 
 autoencoder.compile(loss='mse', optimizer='adam')
 
+df_train, df_test = pickle.load(open("/data/cifar/df.pkl"))
+
+input_data = np.concatenate([df_train, x_train], axis=0)
+output_data = np.concatenate([x_train, x_train], axis=0)
+
+validation_input_data = np.concatenate([df_test, x_test], axis=0)
+validation_output_data = np.concatenate([x_test, x_test], axis=0)
+
 # Train the autoencoder
-autoencoder.fit(x_train,
-                x_train,
-                validation_data=(x_test, x_test),
+autoencoder.fit(input_data,
+                output_data,
+                validation_data=(validation_input_data, validation_output_data),
                 epochs=200,
                 batch_size=batch_size)
 
-autoencoder.save("autoencoder.h5")
+autoencoder.save("autoencoder_df.h5")

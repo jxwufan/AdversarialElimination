@@ -151,20 +151,37 @@ def mnist_tutorial(train_start=0, train_end=60000, test_start=0,
     acc = model_eval(sess, x, y, preds, xx, y_test, args=eval_params)
     print(acc)
 
-  modell = load_modell(str("./autoencoder.h5"))
+  eval(x_test)
+  model = load_modell(str("./autoencoder.h5"))
+  x_test_decoded = model.predict(x_test)
+  eval(x_test_decoded)
+
+  _, fg_test = pickle.load(open("/data/mnist/fg.pkl"))
+  fg_test = fg_test.astype('float32') / 255.
+  fg_test = np.mean(fg_test, axis=3)
+  fg_test = np.expand_dims(fg_test, axis=3)
+  fg_test_decoded = model.predict(fg_test)
+  eval(fg_test)
+  eval(fg_test_decoded)
+
+  _, bim_test = pickle.load(open("/data/mnist/bim.pkl"))
+  bim_test = bim_test.astype('float32') / 255.
+  bim_test = np.mean(bim_test, axis=3)
+  bim_test = np.expand_dims(bim_test, axis=3)
+  bim_test_decoded = model.predict(bim_test)
+  eval(bim_test)
+  eval(bim_test_decoded)
 
   _, df_test = pickle.load(open("/data/mnist/df.pkl"))
-  print(df_test.shape)
   df_test = df_test.astype('float32') / 255.
   df_test = np.mean(df_test, axis=3)
   df_test = np.expand_dims(df_test, axis=3)
-  df_test_decoded = modell.predict(df_test)
-  print(df_test_decoded.shape)
+  df_test_decoded = model.predict(df_test)
   eval(df_test)
   eval(df_test_decoded)
 
-  #pickle.dump([x_test_decoded, fg_test_decoded, bim_test_decoded,
-  #    df_test_decoded], open("./decoded.pkl", "wb"))
+  pickle.dump([x_test_decoded, fg_test_decoded, bim_test_decoded,
+      df_test_decoded], open("./decoded.pkl", "wb"))
 
 def main(argv=None):
   from cleverhans_tutorials import check_installation
